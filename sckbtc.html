@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html>
+	
+	<head>
+		
+		<title>Bitcoin & Websocket</title>
+
+		<style>
+			body { 
+                background-color: #60B0F4; 
+                margin: 0px;
+            }
+            a {
+                color: #FFFFFF;
+            }
+            .main{
+                position: static;
+                height: 100%;
+            }
+            .blockframe{
+                position: absolute;
+                height: 100%;
+                width: 75%;
+            }
+            .navi {
+                text-align: center;
+                position: fixed;
+                right: 0px;
+                background-color: #60B0F4; 
+                z-index: -1;
+                width: 25%;
+            }
+            .incoming{
+                position: absolute;
+                object-position: right;
+                right: 0px;
+                top: 100px;
+                z-index: -2;
+                width: 25%;
+                overflow: auto;
+                height: 90%;
+            }
+        </style>
+		
+		<script src="http://code.jquery.com/jquery-3.2.1.min.js" integrity="sha256-hwg4gsxgFZhOsEEamdOYGBf13FyQuiTwlAQgxVSNgt4=" crossorigin="anonymous"></script>
+	  
+		<script>
+			var addresses = [
+"1111111111111111111114oLvT2",
+"35hK24tcLEWcgNA4JxpvbkNkoAcDGqQPsP",
+"bc1qgdjqv0av3q56jvd82tkdjpy7gdp9ut8tlqmgrpmv24sq90ecnvqqjwvw97",
+"37XuVSEpWW4trkfmvWzegTHQt7BdktSKUs",
+"3Kzh9qAqVWQhEsfQz7zEQL1EuSx5tyNLNS",
+"bc1qt4h06ssqtwncv5rtf8c8v53emwmvr9j5peq9quj9vf0jzu2egnxqpesxny",
+"1NDyJtNTjmwk5xPNhjgAMu4HDHigtobu1s"];
+
+// Add auto ping/pong
+// Add error handler
+			
+			function connect() {
+				//sckBtc.close
+				sckBtc = new WebSocket('wss://ws.blockchain.info/inv');
+	
+				sckBtc.onopen = function(e) {
+					console.log('Connected!');
+			
+					//Subscribe to addresses
+					for (i = 0; i < addresses.length; i++) {
+						console.log('Subscribing to ' + addresses[i]);
+						sckBtc.send(JSON.stringify({"op":"addr_sub", "addr":addresses[i]}));
+						console.log('Subscribed.');
+					};
+					console.log('Imported List: ' + addresses.length);
+
+				};
+
+				sckBtc.onmessage = function(onmsg) {
+					response = JSON.parse(onmsg.data);
+					if (response.op == "utx") {
+						var getOuts = response.x.out;
+						var countOuts = getOuts.length;
+						for (var j=0; j < countOuts; j++) {
+							$('#message').prepend('<li><a href="https://www.blockchain.com/btc/address/' + response.x.out[j].addr + '" target="frameblock">' + response.x.out[j].addr+ '</a></li>')};		}
+
+					//console.log(response)
+					if (response.op == "pong") {
+						//alert('ping');
+						console.log('Pong!')};
+				};
+	
+				sckBtc.onclose = function(e) {
+					console.log(e)
+					alert("DISCONNECTED")
+					//setTimeout(connect, 5000)
+				};
+
+	
+				sckBtc.onerror = function(e) {
+					console.log(e)
+					alert("ERROR!")
+				};
+			};
+
+			function disconnect() {
+				sckBtc.close();
+			};
+
+			function ping() {
+				sckBtc.send(JSON.stringify({"op":"ping"}));
+			};
+			
+			function pingTx() {
+				sckBtc.send(JSON.stringify({"op":"ping_tx"}));
+			};
+
+			//Clear button
+			$(document).ready(function() {
+				$("#button").click(function() {
+					$("#message").empty();
+				})});
+
+	
+
+		</script>
+		
+	</head>
+	
+	<body>
+		
+		<div class="main">
+			
+			<div class="blockframe">
+				
+				<iframe src="../b.svg" name="frameblock" height="100%" width="100%"></iframe>
+			
+			</div>
+	
+			<div class="navi">
+
+				<nav>
+					
+					<button onclick="connect()">Connect</button> |
+					<button onclick="disconnect()">Disconnect</button> |
+					<button onclick="ping()">Ping</button> |
+					<button onclick="pingTx()">PingTx</button> |
+					<button id="button">Clear</button>
+					
+				</nav> 
+
+				<h1>Incoming Bitcoin Transactions</h1>
+		
+			</div>
+			
+			<div class="incoming">
+					
+					<ul id="message"></ul>
+					
+			</div>
+	
+		</div>
+	
+	</body>
+	
+</html>
